@@ -1,0 +1,17 @@
+# Donnees volumineuses
+*.xlsx
+*.parquet
+*.pkl
+
+# Base SQLite metier (regenerable via seed)
+data/ecosys.db
+
+# Caches et artefacts
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+catboost_info/
+~$*
+
+# Scratch superpowers
+.superpowers/
