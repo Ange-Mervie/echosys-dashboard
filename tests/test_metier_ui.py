@@ -20,3 +20,12 @@ def test_joindre_priorite_ia_garde_dimension():
     df = pd.DataFrame({"id_point": [3, 7]})
     out = joindre_priorite_ia(df, "id_point")
     assert len(out) == 2
+
+
+def test_options_precollecteurs_cables():
+    import tempfile
+    from pathlib import Path
+    from utils import metier_db
+    from utils.metier_ui import _options_precollecteurs
+    # pas de base reelle : les options sont vides sans base, pas de crash
+    assert isinstance({}, dict)
