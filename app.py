@@ -31,6 +31,7 @@ from utils.prediction import (
     simuler_prediction,
     FEATURES_SIMULABLES,
 )
+from utils.metier_ui import page_metier
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -48,6 +49,7 @@ PAGES = [
     "Supervision",
     "Points prioritaires",
     "Analyse predictive",
+    "Interface metier",
     "Donnees",
     "A propos du systeme",
 ]
@@ -802,6 +804,8 @@ def main():
         page_prioritaires(df, filtres)
     elif page == "Analyse predictive":
         page_analyse_predictive(contexte)
+    elif page == "Interface metier":
+        page_metier()
     elif page == "Donnees":
         page_donnees(df)
     elif page == "A propos du systeme":
