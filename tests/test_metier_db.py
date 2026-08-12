@@ -20,6 +20,8 @@ from utils.metier_db import (
     inserer_passage,
     inserer_precollecteur,
     inserer_secteur,
+    seed_db,
+    stats_metier,
 )
 
 TABLES = [
@@ -103,3 +105,44 @@ def test_inserer_evenement(db):
     inserer_evenement("2026-02-01", "fete", 1, "Fete test", "moyen",
                       "prevu", db_path=db)
     assert len(charger_evenements(db)) == avant + 1
+
+
+def test_seed_remplit_toutes_les_tables(db):
+    assert seed_db(db) is True
+    chargeurs = [
+        charger_secteurs, charger_abonnements, charger_precollecteurs,
+        charger_sacs_bacs, charger_passages, charger_collectes,
+        charger_evenements,
+    ]
+    for chargeur in chargeurs:
+        assert len(chargeur(db)) > 0
+
+
+def test_seed_idempotent(db):
+    seed_db(db)
+    n1 = len(charger_abonnements(db))
+    assert seed_db(db) is False
+    assert len(charger_abonnements(db)) == n1
+
+
+def test_seed_deterministe(db, tmp_path):
+    db2 = tmp_path / "metier_test2.db"
+    seed_db(db)
+    seed_db(db2)
+    pd.testing.assert_frame_equal(charger_abonnements(db), charger_abonnements(db2))
+    pd.testing.assert_frame_equal(charger_passages(db), charger_passages(db2))
+
+
+def test_seed_nombre_secteurs(db):
+    seed_db(db)
+    assert len(charger_secteurs(db)) == len(SECTEUR_TYPES)
+
+
+def test_stats_metier_coherentes(db):
+    seed_db(db)
+    stats = stats_metier(db)
+    assert stats["secteurs"] == len(charger_secteurs(db))
+    assert stats["abonnements"] == len(charger_abonnements(db))
+    assert stats["passages"] == len(charger_passages(db))
+    assert stats["collectes"] == len(charger_collectes(db))
+    assert stats["evenements"] == len(charger_evenements(db))
