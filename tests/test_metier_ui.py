@@ -29,3 +29,14 @@ def test_options_precollecteurs_cables():
     from utils.metier_ui import _options_precollecteurs
     # pas de base reelle : les options sont vides sans base, pas de crash
     assert isinstance({}, dict)
+
+
+def test_cohercer_slider_homogeneise_les_types():
+    from utils.prediction import cohercer_slider
+    # valeur entiere (np.int64) + bornes int -> tout en int
+    v, lo, hi, stp = cohercer_slider(2, 0, 7, 1)
+    assert isinstance(v, int) and isinstance(lo, int) and isinstance(hi, int)
+    # valeur flottante -> tout en float
+    v2, lo2, hi2, stp2 = cohercer_slider(2.5, 0, 7, 1)
+    assert isinstance(v2, float) and isinstance(lo2, float) and isinstance(hi2, float)
+    assert set(map(type, (v2, lo2, hi2, stp2))) == {float}

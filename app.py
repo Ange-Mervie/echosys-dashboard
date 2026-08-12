@@ -30,6 +30,7 @@ from utils.prediction import (
     extraire_ligne_ml,
     simuler_prediction,
     FEATURES_SIMULABLES,
+    cohercer_slider,
 )
 from utils.metier_ui import page_metier
 
@@ -550,13 +551,15 @@ def page_analyse_predictive(contexte):
                 with st.expander("Ajuster les parametres (what-if)", expanded=True):
                     for colonne, (mini, maxi, pas) in FEATURES_SIMULABLES.items():
                         if colonne in ligne_ml.index:
-                            valeur_initiale = float(ligne_ml[colonne])
+                            valeur_slider, mini_s, maxi_s, pas_s = cohercer_slider(
+                                ligne_ml[colonne], mini, maxi, pas
+                            )
                             ajustements[colonne] = st.slider(
                                 colonne,
-                                min_value=mini,
-                                max_value=maxi,
-                                value=valeur_initiale,
-                                step=pas,
+                                min_value=mini_s,
+                                max_value=maxi_s,
+                                value=valeur_slider,
+                                step=pas_s,
                             )
 
                 predit, priorite, action, _ = simuler_prediction(ligne_ml, ajustements)

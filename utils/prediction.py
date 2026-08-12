@@ -98,6 +98,19 @@ FEATURES_SIMULABLES = {
 }
 
 
+def cohercer_slider(valeur_initiale, mini, maxi, pas):
+    """Homogénéise les types d'un slider Streamlit (int vs float).
+
+    Streamlit exige que `value`, `min_value`, `max_value` et `step` soient
+    du même type. Les valeurs métier sont des entiers (np.int64) tandis que
+    les bornes de FEATURES_SIMULABLES sont des int : on renvoie donc des int
+    quand la valeur est entière, sinon des float pour tout le groupe.
+    """
+    if float(valeur_initiale).is_integer():
+        return int(valeur_initiale), int(mini), int(maxi), int(pas)
+    return float(valeur_initiale), float(mini), float(maxi), float(pas)
+
+
 def extraire_ligne_ml(ml_df, id_point, date_collecte):
     """Retourne la ligne de features ML correspondant à un point et une date."""
     date_collecte = pd.to_datetime(date_collecte)
