@@ -14,9 +14,15 @@ from utils.data_loader import load_model
 ORDRE_PRIORITE = ["Urgente", "Elevée", "Moyenne", "Faible"]
 COULEURS_PRIORITE = {
     "Urgente": "#C62828",
-    "Elevée": "#E53935",
-    "Moyenne": "#FB8C00",
+    "Elevée": "#E65100",
+    "Moyenne": "#F9A825",
     "Faible": "#2E7D32",
+}
+COULEURS_BADGE = {
+    "Urgente": {"fond": "#FDECEC", "texte": "#B71C1C"},
+    "Elevée": {"fond": "#FFF0E0", "texte": "#B23C00"},
+    "Moyenne": {"fond": "#FFF8E1", "texte": "#7A5B00"},
+    "Faible": {"fond": "#E8F5E9", "texte": "#1B5E20"},
 }
 
 SEUILS = {"faible": 40, "moyenne": 70, "elevee": 90}

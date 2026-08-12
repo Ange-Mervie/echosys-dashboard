@@ -20,7 +20,7 @@ from utils.data_loader import (
     load_ml_data,
     verifier_colonnes,
 )
-from utils.ui import carte_kpi
+from utils.ui import carte_kpi, injecter_css, badge_priorite, style_table
 from utils.prediction import (
     ORDRE_PRIORITE,
     COULEURS_PRIORITE,
@@ -55,55 +55,18 @@ PAGES = [
 ]
 
 # ---------------------------------------------------------------------------
-# Styles
+# Styles (design system partage, voir DESIGN.md)
 # ---------------------------------------------------------------------------
 
-CSS = """
-<style>
-:root {
-    --vert-fonce: #1B5E20;
-    --vert: #2E7D32;
-    --orange: #FB8C00;
-    --rouge: #C62828;
-}
-.block-container {padding-top: 1.2rem; padding-bottom: 2rem;}
-[data-testid="stSidebar"] {background-color: #F4F6F8;}
-.main .block-container {max-width: 1200px;}
-h1 {color: #1B5E20; font-weight: 700;}
-h2, h3 {color: #263238;}
-.kpi-card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 1rem 1.2rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    border-left: 5px solid #2E7D32;
-    border-top: 1px solid #E8EAED;
-    border-right: 1px solid #E8EAED;
-    border-bottom: 1px solid #E8EAED;
-}
-.kpi-label {font-size: 0.8rem; color: #607D8B; text-transform: uppercase; letter-spacing: 0.03em;}
-.kpi-value {font-size: 1.7rem; font-weight: 700; color: #1B5E20; margin-top: 0.2rem;}
-.kpi-suffix {font-size: 0.95rem; color: #546E7A; font-weight: 500;}
-.pilote-banner {
-    background: linear-gradient(90deg, #1B5E20 0%, #2E7D32 60%, #388E3C 100%);
-    color: white; padding: 1.2rem 1.5rem; border-radius: 12px; margin-bottom: 1rem;
-}
-.stButton>button {
-    border-radius: 8px; border: 1px solid #B0BEC5;
-    background: white; color: #263238;
-}
-.stButton>button:hover {border-color: #2E7D32; color: #2E7D32;}
-</style>
-"""
-st.markdown(CSS, unsafe_allow_html=True)
+injecter_css()
 
 
 def afficher_entete():
     st.markdown(
         """
         <div class="pilote-banner">
-            <div style="font-size:1.6rem; font-weight:800;">ECOSYS &mdash; Supervision intelligente de la pre-collecte</div>
-            <div style="font-size:1rem; opacity:0.95;">Prediction, priorisation et aide a la decision</div>
+            <div class="pb-titre">ECOSYS &mdash; Supervision intelligente de la pre-collecte</div>
+            <div class="pb-sous">Prediction, priorisation et aide a la decision</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -320,10 +283,6 @@ def graph_hausses_fortes(df_use):
 # ---------------------------------------------------------------------------
 
 
-def style_priorite(val):
-    return f"color: {COULEURS_PRIORITE.get(val, '#000')}; font-weight: 700;"
-
-
 def tableau_operationnel(df_use):
     colonnes = [
         "id_point",
@@ -350,7 +309,7 @@ def tableau_operationnel(df_use):
             },
             na_rep="-",
         )
-        .map(style_priorite, subset=["priorite_prediction"])
+        .map(style_table, subset=["priorite_prediction"])
         .set_properties(**{"font-size": "0.9rem"})
     )
     return styled
@@ -400,14 +359,9 @@ def construire_carte(df_use):
 
 def afficher_legende():
     cols = st.columns(len(COULEURS_PRIORITE))
-    for col, (label, couleur) in zip(cols, COULEURS_PRIORITE.items()):
+    for col, (label, _) in zip(cols, COULEURS_PRIORITE.items()):
         with col:
-            st.markdown(
-                f'<span style="display:inline-block;width:12px;height:12px;border-radius:50%;'
-                f'background:{couleur};margin-right:6px;"></span> '
-                f'<span style="font-size:0.9rem;color:#263238;">{label}</span>',
-                unsafe_allow_html=True,
-            )
+            st.markdown(badge_priorite(label), unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -448,7 +402,7 @@ def page_accueil(df, filtres):
                 "fillRate_predit", ascending=False
             )[["id_point", "fillRate_predit", "priorite_prediction", "action_recommandee"]]
             .head(5)
-            .style.map(style_priorite, subset=["priorite_prediction"]),
+            .style.map(style_table, subset=["priorite_prediction"]),
             use_container_width=True,
             hide_index=True,
         )
@@ -510,7 +464,7 @@ def page_prioritaires(df, filtres):
     top10 = df_prio.head(10)
     st.dataframe(
         top10[["id_point", "fillRate", "fillRate_predit", "risque_debordement", "priorite_prediction", "action_recommandee"]]
-        .style.map(style_priorite, subset=["priorite_prediction"])
+        .style.map(style_table, subset=["priorite_prediction"])
         .format({"fillRate": "{:.1f}%", "fillRate_predit": "{:.1f}%", "risque_debordement": "{:,.0f}"}),
         use_container_width=True,
         hide_index=True,
@@ -622,9 +576,9 @@ def page_analyse_predictive(contexte):
                 with rc3:
                     st.markdown(
                         f"""
-                        <div class="kpi-card" style="border-left-color:{couleur};">
+                        <div class="kpi-card">
                             <div class="kpi-label">Priorite predite</div>
-                            <div class="kpi-value" style="color:{couleur};">{priorite}</div>
+                            <div class="kpi-value" style="color:{couleur};">{badge_priorite(priorite)}</div>
                         </div>
                         """,
                         unsafe_allow_html=True,
@@ -632,7 +586,7 @@ def page_analyse_predictive(contexte):
                 with rc4:
                     st.markdown(
                         f"""
-                        <div class="kpi-card" style="border-left-color:{couleur};">
+                        <div class="kpi-card">
                             <div class="kpi-label">Action recommandee</div>
                             <div class="kpi-value" style="font-size:1.1rem; color:#1B5E20;">{action}</div>
                         </div>
@@ -644,7 +598,7 @@ def page_analyse_predictive(contexte):
                 etapes = [
                     ("1. Modele", "Gradient Boosting"),
                     ("2. Prediction", f"{predit:.1f}%"),
-                    ("3. Priorite", priorite),
+                    ("3. Priorite", badge_priorite(priorite)),
                     ("4. Action", action),
                 ]
                 cols_etapes = st.columns(len(etapes))
@@ -652,10 +606,9 @@ def page_analyse_predictive(contexte):
                     with col:
                         st.markdown(
                             f"""
-                            <div style="background:#F1F8E9;border:1px solid #C8E6C9;border-radius:10px;
-                                 padding:0.8rem;text-align:center;height:100%;">
-                                <div style="font-size:0.75rem;color:#558B2F;text-transform:uppercase;">{titre}</div>
-                                <div style="font-weight:700;color:#1B5E20;font-size:0.95rem;margin-top:0.3rem;">{valeur}</div>
+                            <div class="etape-pipeline">
+                                <div class="et-titre">{titre}</div>
+                                <div class="et-valeur">{valeur}</div>
                             </div>
                             """,
                             unsafe_allow_html=True,
