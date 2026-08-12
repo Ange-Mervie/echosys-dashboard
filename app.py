@@ -20,6 +20,7 @@ from utils.data_loader import (
     load_ml_data,
     verifier_colonnes,
 )
+from utils.ui import carte_kpi
 from utils.prediction import (
     ORDRE_PRIORITE,
     COULEURS_PRIORITE,
@@ -101,19 +102,6 @@ def afficher_entete():
         <div class="pilote-banner">
             <div style="font-size:1.6rem; font-weight:800;">ECOSYS &mdash; Supervision intelligente de la pre-collecte</div>
             <div style="font-size:1rem; opacity:0.95;">Prediction, priorisation et aide a la decision</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def carte_kpi(libelle, valeur, suffixe="", sous_texte=None):
-    st.markdown(
-        f"""
-        <div class="kpi-card">
-            <div class="kpi-label">{libelle}</div>
-            <div class="kpi-value">{valeur}<span class="kpi-suffix"> {suffixe}</span></div>
-            {f'<div style="font-size:0.85rem;color:#78909C;margin-top:0.2rem;">{sous_texte}</div>' if sous_texte else ''}
         </div>
         """,
         unsafe_allow_html=True,
