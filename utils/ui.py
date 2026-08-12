@@ -50,7 +50,7 @@ html, body, [class*="css"] {
     background: transparent;
 }
 h1 {
-    color: var(--vert-900);
+    color: var(--vert-700);
     font-weight: 700;
     text-wrap: balance;
 }
@@ -83,7 +83,7 @@ p {
 .kpi-value {
     font-size: 1.6rem;
     font-weight: 700;
-    color: var(--vert-900);
+    color: var(--vert-700);
     margin-top: 0.2rem;
     line-height: 1.1;
 }
@@ -103,7 +103,7 @@ p {
 /* ------------------------------------------------------------------ */
 
 .pilote-banner {
-    background: linear-gradient(120deg, var(--vert-950) 0%, var(--vert-900) 55%, var(--vert-700) 100%);
+    background: linear-gradient(120deg, var(--vert-900) 0%, var(--vert-700) 55%, var(--vert-600) 100%);
     color: #FFFFFF;
     padding: 1.2rem 1.5rem;
     border-radius: 12px;
@@ -115,7 +115,8 @@ p {
 }
 .pilote-banner .pb-sous {
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.92);
+    font-weight: 600;
+    color: #FFFFFF;
 }
 
 /* ------------------------------------------------------------------ */
@@ -191,7 +192,7 @@ p {
     border-bottom: 2px solid transparent;
 }
 [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
-    color: var(--vert-900);
+    color: var(--vert-700);
     border-bottom-color: var(--vert-700);
 }
 [data-testid="stTabs"] [data-baseweb="tab-highlight"] {
@@ -231,7 +232,7 @@ p {
     color: var(--vert-700);
 }
 [data-testid="stSidebar"] [data-testid="stRadio"] [data-checked] {
-    color: var(--vert-900);
+    color: var(--vert-700);
     font-weight: 700;
 }
 
@@ -240,7 +241,7 @@ p {
 /* ------------------------------------------------------------------ */
 
 [data-testid="stMetricValue"] {
-    color: var(--vert-900);
+    color: var(--vert-700);
     font-weight: 700;
 }
 
@@ -264,7 +265,7 @@ p {
 }
 .etape-pipeline .et-valeur {
     font-weight: 700;
-    color: var(--vert-900);
+    color: var(--vert-700);
     font-size: 0.95rem;
     margin-top: 0.3rem;
 }

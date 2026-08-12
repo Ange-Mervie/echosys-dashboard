@@ -19,9 +19,10 @@
 
 | Token | OKLCH | Hex | Usage |
 |---|---|---|---|
-| `--vert-950` | `oklch(0.28 0.07 150)` | `#0E3A12` | texte / fond d'en-tête profond |
-| `--vert-900` | `oklch(0.39 0.10 150)` | `#1B5E20` | marque primaire, titres, barre active |
-| `--vert-700` | `oklch(0.50 0.10 150)` | `#2E7D32` | marque secondaire, actions |
+| `--vert-950` | `oklch(0.28 0.07 150)` | `#0E3A12` | texte profond / accents ponctuels |
+| `--vert-900` | `oklch(0.39 0.10 150)` | `#1B5E20` | dégradé bannière, texte badge Faible |
+| `--vert-800` | `oklch(0.45 0.10 150)` | `#1F6B27` | intermédiaire de la rampe |
+| `--vert-700` | `oklch(0.50 0.10 150)` | `#2E7D32` | titres h1, valeurs KPI, onglet actif, actions |
 | `--vert-600` | `oklch(0.58 0.10 150)` | `#388E3C` | survols, éléments positifs |
 | `--vert-100` | `oklch(0.91 0.05 150)` | `#C8E6C9` | fonds teintés success |
 | `--vert-50` | `oklch(0.96 0.02 150)` | `#E8F5E9` | fonds teintés light |
@@ -53,7 +54,7 @@ nettement d'`Urgente` (facilite le daltonisme rouge-vert).
 
 - Une seule famille : `"Inter", system-ui, "Segoe UI", Roboto, Arial, sans-serif`.
 - Échelle fixe (rem), ratio serré ~1.2 : base 1rem (16px), h1 1.75rem, h2 1.4rem, h3 1.15rem.
-- Corps : `--ink-2` ; titres : `--ink` (h1 en `--vert-900`).
+- Corps : `--ink-2` ; titres : `--ink` (h1 en `--vert-700`).
 - `text-wrap: balance` sur h1–h3.
 - Longueur de ligne : 65–75ch pour le prose ; tableaux denses tolérés.
 
@@ -62,15 +63,15 @@ nettement d'`Urgente` (facilite le daltonisme rouge-vert).
 ### KPI card
 - Fond blanc, `border: 1px solid var(--border)`, rayon 12px, **pas** d'ombre large ni de
   side-stripe. Hiérarchie portée par la typo : label 0.72rem uppercase (gris-bleu), valeur
-  1.6rem 700 (`--vert-900`), suffixe 0.9rem. Option : pastille teintée de priorité.
+  1.6rem 700 (`--vert-700`), suffixe 0.9rem. Option : pastille teintée de priorité.
 
 ### Badge de priorité
 - `display:inline-flex; padding:2px 10px; border-radius:999px; font-weight:700; font-size:0.8rem;`
   fond = teinte, texte = couleur foncée. Classes `.prio-urgente .prio-elevee .prio-moyenne .prio-faible`.
 
 ### Bannière
-- Fond `linear-gradient(120deg, #0E3A12, #1B5E20 55%, #2E7D32)`, texte blanc, rayon 12px.
-  Sous-titre en blanc/opacité 0.9 (≥ 4.5:1 sur fond vert foncé).
+- Fond `linear-gradient(120deg, #1B5E20, #2E7D32 55%, #388E3C)`, texte blanc, rayon 12px.
+  Sous-titre en blanc plein et gras (contraste ≥ 4.5:1 sur le vert le plus clair du dégradé).
 
 ### Boutons
 - Primaire (soumettre) : fond `--vert-700`, texte blanc, rayon 8px, hover `--vert-600`, focus

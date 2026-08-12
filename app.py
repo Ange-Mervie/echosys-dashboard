@@ -211,7 +211,7 @@ def graph_priorites(df_use):
         title="Repartition des priorites",
         yaxis_title="Nombre de points",
         height=320,
-        margin=dict(l=10, r=10, t=50, b=10),
+        margin=dict(l=10, r=10, t=30, b=10),
     )
     return fig
 
@@ -253,7 +253,7 @@ def graph_actuel_vs_predit(df_use):
         yaxis_title="FillRate predit (%)",
         height=420,
         legend=dict(orientation="h", yanchor="bottom", y=1.02),
-        margin=dict(l=10, r=10, t=50, b=10),
+        margin=dict(l=10, r=10, t=30, b=10),
     )
     return fig
 
@@ -591,7 +591,7 @@ def page_analyse_predictive(contexte):
                         f"""
                         <div class="kpi-card">
                             <div class="kpi-label">Action recommandee</div>
-                            <div class="kpi-value" style="font-size:1.1rem; color:#1B5E20;">{action}</div>
+                            <div class="kpi-value" style="font-size:1.1rem; color:var(--vert-700);">{action}</div>
                         </div>
                         """,
                         unsafe_allow_html=True,
