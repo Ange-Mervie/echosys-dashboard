@@ -32,7 +32,10 @@
 
 - [ ] **Step 1: Écrire le test qui échoue**
 
-Crée `tests/test_metier_db.py` :
+Crée `tests/test_metier_db.py`. N'importe **que les noms définis à cette étape**
+(`init_db` et les 7 chargeurs) : les fonctions `inserer_*`, `seed_db`,
+`stats_metier` sont ajoutées aux imports dans les Tasks 2 et 3, au moment où
+elles existent (un `from ... import` d'un nom inexistant échoue à l'import).
 
 ```python
 import sqlite3
@@ -50,15 +53,6 @@ from utils.metier_db import (
     charger_sacs_bacs,
     charger_secteurs,
     init_db,
-    inserer_abonnement,
-    inserer_collecte,
-    inserer_conteneur,
-    inserer_evenement,
-    inserer_passage,
-    inserer_precollecteur,
-    inserer_secteur,
-    seed_db,
-    stats_metier,
 )
 
 TABLES = [
@@ -302,7 +296,19 @@ git init 2>/dev/null; git add tests/test_metier_db.py utils/metier_db.py && git 
 
 - [ ] **Step 1: Écrire les tests qui échouent**
 
-Ajoute à `tests/test_metier_db.py` :
+Ajoute en haut de `tests/test_metier_db.py`, dans le bloc `from utils.metier_db import (...)` :
+
+```python
+    inserer_abonnement,
+    inserer_collecte,
+    inserer_conteneur,
+    inserer_evenement,
+    inserer_passage,
+    inserer_precollecteur,
+    inserer_secteur,
+```
+
+Ajoute ensuite à `tests/test_metier_db.py` :
 
 ```python
 def test_inserer_secteur(db):
@@ -474,7 +480,14 @@ git add utils/metier_db.py tests/test_metier_db.py && git commit -m "feat: inser
 
 - [ ] **Step 1: Écrire les tests qui échouent**
 
-Ajoute à `tests/test_metier_db.py` :
+Ajoute en haut de `tests/test_metier_db.py`, dans le bloc `from utils.metier_db import (...)` :
+
+```python
+    seed_db,
+    stats_metier,
+```
+
+Ajoute ensuite à `tests/test_metier_db.py` :
 
 ```python
 def test_seed_remplit_toutes_les_tables(db):
