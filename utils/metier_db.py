@@ -173,3 +173,83 @@ def charger_collectes(db_path=None):
 
 def charger_evenements(db_path=None):
     return charger_table("evenements", db_path)
+
+
+def inserer_secteur(nom, quartiers, type_secteur, nb_points, responsable,
+                    db_path=None):
+    db_path = Path(db_path or DB_PATH)
+    with closing(_connect(db_path)) as conn, conn:
+        conn.execute(
+            "INSERT INTO secteurs (nom, quartiers, type_secteur, nb_points, responsable) "
+            "VALUES (?,?,?,?,?)",
+            (nom, quartiers, type_secteur, nb_points, responsable),
+        )
+
+
+def inserer_abonnement(id_secteur, client, type_abonnement, frequence,
+                       date_debut, statut, montant_mensuel, db_path=None):
+    db_path = Path(db_path or DB_PATH)
+    with closing(_connect(db_path)) as conn, conn:
+        conn.execute(
+            "INSERT INTO abonnements (id_secteur, client, type_abonnement, frequence, "
+            "date_debut, statut, montant_mensuel) VALUES (?,?,?,?,?,?,?)",
+            (id_secteur, client, type_abonnement, frequence, date_debut,
+             statut, montant_mensuel),
+        )
+
+
+def inserer_precollecteur(nom, id_secteur, equipement, capacite_sacs,
+                          disponible, telephone, db_path=None):
+    db_path = Path(db_path or DB_PATH)
+    with closing(_connect(db_path)) as conn, conn:
+        conn.execute(
+            "INSERT INTO precollecteurs (nom, id_secteur, equipement, capacite_sacs, "
+            "disponible, telephone) VALUES (?,?,?,?,?,?)",
+            (nom, id_secteur, equipement, capacite_sacs, disponible, telephone),
+        )
+
+
+def inserer_conteneur(id_point, id_secteur, type_conteneur, capacite_litres,
+                      etat, db_path=None):
+    db_path = Path(db_path or DB_PATH)
+    with closing(_connect(db_path)) as conn, conn:
+        conn.execute(
+            "INSERT INTO sacs_bacs (id_point, id_secteur, type_conteneur, "
+            "capacite_litres, etat) VALUES (?,?,?,?,?)",
+            (id_point, id_secteur, type_conteneur, capacite_litres, etat),
+        )
+
+
+def inserer_passage(id_point, id_precollecteur, date_passage, quantite_kg,
+                    statut, db_path=None):
+    db_path = Path(db_path or DB_PATH)
+    with closing(_connect(db_path)) as conn, conn:
+        conn.execute(
+            "INSERT INTO passages (id_point, id_precollecteur, date_passage, "
+            "quantite_kg, statut) VALUES (?,?,?,?,?)",
+            (id_point, id_precollecteur, date_passage, quantite_kg, statut),
+        )
+
+
+def inserer_collecte(id_point, date_collecte, type_collecte, volume_litres,
+                     id_precollecteur, statut, duree_minutes, db_path=None):
+    db_path = Path(db_path or DB_PATH)
+    with closing(_connect(db_path)) as conn, conn:
+        conn.execute(
+            "INSERT INTO collectes (id_point, date_collecte, type_collecte, "
+            "volume_litres, id_precollecteur, statut, duree_minutes) "
+            "VALUES (?,?,?,?,?,?,?)",
+            (id_point, date_collecte, type_collecte, volume_litres,
+             id_precollecteur, statut, duree_minutes),
+        )
+
+
+def inserer_evenement(date, type_evenement, id_secteur, description, impact,
+                      statut, db_path=None):
+    db_path = Path(db_path or DB_PATH)
+    with closing(_connect(db_path)) as conn, conn:
+        conn.execute(
+            "INSERT INTO evenements (date, type_evenement, id_secteur, "
+            "description, impact, statut) VALUES (?,?,?,?,?,?)",
+            (date, type_evenement, id_secteur, description, impact, statut),
+        )
