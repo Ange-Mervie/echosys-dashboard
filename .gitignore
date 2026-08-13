@@ -1,7 +1,12 @@
 # Donnees volumineuses
-*.xlsx
-*.parquet
-*.pkl
+dashboard/*.xlsx
+dashboard/*.parquet
+data/processed/*.xlsx
+data/processed/*.parquet
+orbit_dataset.xlsx
+
+# Modele ML
+models/*.pkl
 
 # Base SQLite metier (regenerable via seed)
 data/ecosys.db
