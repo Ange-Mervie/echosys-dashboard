@@ -20,7 +20,18 @@ from utils.data_loader import (
     load_ml_data,
     verifier_colonnes,
 )
-from utils.ui import carte_kpi, injecter_css, badge_priorite, style_table, section_spacer
+from utils.ui import (
+    injecter_css,
+    badge_priorite,
+    style_table,
+    synthese_operationnelle,
+    entete_app,
+    entete_page,
+    titre_section,
+    bande_kpi,
+    afficher_figure,
+    stepper,
+)
 from utils.prediction import (
     ORDRE_PRIORITE,
     COULEURS_PRIORITE,
@@ -39,8 +50,8 @@ from utils.metier_ui import page_metier
 # ---------------------------------------------------------------------------
 
 st.set_page_config(
-    page_title="ECOHSYS - Supervision intelligente de la pre-collecte",
-    page_icon="\U0001F30D",
+    page_title="ECOSYS - Supervision de la pré-collecte",
+    page_icon="assets/favicon.svg",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -60,26 +71,6 @@ PAGES = [
 # ---------------------------------------------------------------------------
 
 injecter_css()
-
-
-def afficher_entete():
-    st.markdown(
-        """
-        <div class="pilote-banner">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div style="width:38px; height:38px; background:rgba(255,255,255,0.15); border-radius:10px;
-                            display:flex; align-items:center; justify-content:center;">
-                    <span style="font-size:18px; font-weight:800; color:#FFFFFF;">E</span>
-                </div>
-                <div>
-                    <div class="pb-titre">ECHOSYS &mdash; Supervision intelligente de la pre-collecte</div>
-                    <div class="pb-sous">Prediction, priorisation et aide a la decision</div>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -103,9 +94,20 @@ def charger_donnees():
 
 def charger_contexte():
     contexte = {}
+    # Compatibilité de sérialisation : le modèle a été entraîné avec une version
+    # de scikit-learn où la classe compilée de loss vivait dans le module
+    # top-level `_loss`. Les versions récentes l'exposent sous `sklearn._loss._loss`.
+    # On rétablit l'alias au démarrage pour permettre le chargement, sans toucher
+    # au fichier modèle ni au chargeur de données.
+    try:
+        import sys
+        import sklearn._loss._loss as _loss_module
+        sys.modules.setdefault("_loss", _loss_module)
+    except Exception:
+        pass
     try:
         contexte["model"] = load_model()
-    except FileNotFoundError as e:
+    except (FileNotFoundError, ModuleNotFoundError) as e:
         contexte["model"] = None
         st.sidebar.warning("Modele non charge : " + str(e))
     try:
@@ -213,21 +215,13 @@ def graph_priorites(df_use):
             marker_color=[COULEURS_PRIORITE[p] for p in comptage.index],
             text=comptage.values.astype(int),
             textposition="outside",
-            textfont=dict(size=12, color="#1A2332"),
         )
     )
     fig.update_layout(
-        title=dict(text="Repartition des priorites", font=dict(size=14, color="#1A2332")),
+        title="Repartition des priorites",
         yaxis_title="Nombre de points",
-        xaxis_title="",
         height=320,
-        margin=dict(l=10, r=10, t=45, b=10),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="Inter, sans-serif", color="#374151", size=12),
-        xaxis=dict(gridcolor="#F1F5F9", zerolinecolor="#E2E8F0"),
-        yaxis=dict(gridcolor="#F1F5F9", zerolinecolor="#E2E8F0"),
-        showlegend=False,
+        margin=dict(l=10, r=10, t=30, b=10),
     )
     return fig
 
@@ -243,7 +237,7 @@ def graph_actuel_vs_predit(df_use):
             x=[0, 100],
             y=[0, 100],
             mode="lines",
-            line=dict(color="#CBD5E1", dash="dash", width=1.5),
+            line=dict(color="#B0BEC5", dash="dash"),
             name="y = x (stabilite)",
             hoverinfo="skip",
         )
@@ -258,26 +252,18 @@ def graph_actuel_vs_predit(df_use):
                 y=sub["fillRate_predit"],
                 mode="markers",
                 name=p,
-                marker=dict(color=COULEURS_PRIORITE[p], size=9, opacity=0.85,
-                            line=dict(width=1, color="rgba(255,255,255,0.8)")),
+                marker=dict(color=COULEURS_PRIORITE[p], size=9, opacity=0.85),
                 customdata=sub[["id_point", "hausse"]].to_numpy(),
                 hovertemplate="Point %{customdata[0]}<br>Actuel: %{x:.1f}%<br>Predit: %{y:.1f}%<br>Variation: %{customdata[1]:+.1f} pts<extra></extra>",
             )
         )
     fig.update_layout(
-        title=dict(text="FillRate actuel vs FillRate predit", font=dict(size=14, color="#1A2332")),
+        title="FillRate actuel vs FillRate predit",
         xaxis_title="FillRate actuel (%)",
         yaxis_title="FillRate predit (%)",
         height=420,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5,
-                    font=dict(size=11), bgcolor="rgba(0,0,0,0)"),
-        margin=dict(l=10, r=10, t=45, b=10),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="Inter, sans-serif", color="#374151", size=12),
-        xaxis=dict(gridcolor="#F1F5F9", zerolinecolor="#E2E8F0", range=[0, 100]),
-        yaxis=dict(gridcolor="#F1F5F9", zerolinecolor="#E2E8F0", range=[0, 100]),
-        hoverlabel=dict(bgcolor="#1A2332", bordercolor="#1A2332", font=dict(color="#FFFFFF", size=12)),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02),
+        margin=dict(l=10, r=10, t=30, b=10),
     )
     return fig
 
@@ -296,17 +282,10 @@ def graph_hausses_fortes(df_use):
         color="priorite_prediction",
         color_discrete_map=COULEURS_PRIORITE,
         labels={"hausse": "Variation (pts)", "y": "Point"},
+        title="Points avec la plus forte augmentation prevue",
         height=380,
     )
-    fig.update_layout(
-        title=dict(text="Points avec la plus forte augmentation prevue", font=dict(size=14, color="#1A2332")),
-        margin=dict(l=10, r=10, t=45, b=10),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="Inter, sans-serif", color="#374151", size=12),
-        xaxis=dict(gridcolor="#F1F5F9", zerolinecolor="#E2E8F0"),
-        legend=dict(font=dict(size=11), bgcolor="rgba(0,0,0,0)"),
-    )
+    fig.update_layout(margin=dict(l=10, r=10, t=50, b=10))
     return fig
 
 
@@ -365,31 +344,14 @@ def construire_carte(df_use):
     for _, row in df_map.iterrows():
         couleur = COULEURS_PRIORITE.get(row["priorite_prediction"], "#78909C")
         html_popup = f"""
-        <div style="font-family:'Inter',system-ui,sans-serif; font-size:12px; width:260px; padding:4px; line-height:1.6;">
-            <div style="font-size:14px; font-weight:700; color:#1A2332; margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid #E2E8F0;">
-                Point #{int(row['id_point'])}
-            </div>
-            <div style="color:#374151;">
-                <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
-                    <span style="color:#6B7280;">Remplissage actuel</span>
-                    <span style="font-weight:600;">{row['fillRate']:.1f}%</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
-                    <span style="color:#6B7280;">Remplissage predit</span>
-                    <span style="font-weight:600;color:{couleur};">{row['fillRate_predit']:.1f}%</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
-                    <span style="color:#6B7280;">Risque</span>
-                    <span style="font-weight:600;">{row['risque_debordement']:,.0f}</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
-                    <span style="color:#6B7280;">Priorite</span>
-                    <span style="font-weight:700;color:{couleur};">{row['priorite_prediction']}</span>
-                </div>
-                <div style="margin-top:6px;padding-top:6px;border-top:1px solid #E2E8F0;color:#6B7280;">
-                    <b>Action :</b> {row['action_recommandee']}
-                </div>
-            </div>
+        <div style="font-family:sans-serif; font-size:13px; width:260px;">
+            <b>Point #{int(row['id_point'])}</b><br>
+            FillRate actuel : <b>{row['fillRate']:.1f}%</b><br>
+            FillRate predit : <b>{row['fillRate_predit']:.1f}%</b><br>
+            Risque de debordement : <b>{row['risque_debordement']:,.0f}</b><br>
+            Priorite : <span style="color:{couleur}; font-weight:700;">{row['priorite_prediction']}</span><br>
+            Action : <b>{row['action_recommandee']}</b><br>
+            Signalements : {row.get('nb_signalements_citoyens', '-')} | Plaintes : {row.get('nb_plaintes', '-')}
         </div>
         """
         folium.CircleMarker(
@@ -407,20 +369,10 @@ def construire_carte(df_use):
 
 
 def afficher_legende():
-    items = ""
-    for label, color in COULEURS_PRIORITE.items():
-        items += (
-            f'<span style="display:inline-flex;align-items:center;gap:5px;margin-right:16px;'
-            f'font-size:12px;color:#374151;font-weight:500;">'
-            f'<span style="width:10px;height:10px;border-radius:50%;background:{color};flex-shrink:0;"></span>'
-            f'{label}</span>'
-        )
-    st.markdown(
-        f'<div style="padding:4px 0 8px 0;display:flex;align-items:center;flex-wrap:wrap;">'
-        f'<span style="font-size:12px;font-weight:600;color:#6B7280;margin-right:12px;">Legende :</span>'
-        f'{items}</div>',
-        unsafe_allow_html=True,
-    )
+    cols = st.columns(len(COULEURS_PRIORITE))
+    for col, (label, _) in zip(cols, COULEURS_PRIORITE.items()):
+        with col:
+            st.markdown(badge_priorite(label), unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -431,31 +383,30 @@ def afficher_legende():
 def page_accueil(df, filtres):
     kpis, df_use = calculer_kpis(df, filtres)
 
-    st.subheader("Tableau de bord global")
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        carte_kpi("Points suivis", f"{kpis['nb_points']:,}", sous_texte=f"{df['id_point'].nunique():,} au total")
-    with c2:
-        carte_kpi("FillRate actuel moyen", f"{kpis['fill_moyen']:.1f}", "%")
-    with c3:
-        carte_kpi("FillRate predit moyen", f"{kpis['fill_predit_moyen']:.1f}", "%")
-    with c4:
-        carte_kpi("Points prioritaires", f"{kpis['nb_prioritaires']:,}", sous_texte="Elevee ou Urgente")
+    entete_page(
+        "Tableau de bord global",
+        "Vue d'ensemble de la pré-collecte : état de remplissage, priorisation et signaux "
+        "citoyens pour la période sélectionnée.",
+    )
 
-    c5, c6, c7 = st.columns(3)
-    with c5:
-        carte_kpi("Points a risque", f"{kpis['nb_risque']:,}", sous_texte="Top 10% du risque de debordement")
-    with c6:
-        carte_kpi("Plaintes citoyens", f"{kpis['nb_plaintes']:,}")
-    with c7:
-        carte_kpi("Signalements citoyens", f"{kpis['nb_signalements']:,}")
+    bande_kpi([
+        {"label": "Points suivis", "valeur": f"{kpis['nb_points']:,}",
+         "sous": f"{df['id_point'].nunique():,} au total"},
+        {"label": "FillRate actuel", "valeur": f"{kpis['fill_moyen']:.1f}", "suffixe": "%"},
+        {"label": "FillRate predit", "valeur": f"{kpis['fill_predit_moyen']:.1f}", "suffixe": "%"},
+        {"label": "Points prioritaires", "valeur": f"{kpis['nb_prioritaires']:,}",
+         "accent": "urgent", "is_accent": True, "sous": "Elevee ou Urgente"},
+        {"label": "Points a risque", "valeur": f"{kpis['nb_risque']:,}",
+         "sous": "Top 10% du risque de debordement"},
+        {"label": "Plaintes", "valeur": f"{kpis['nb_plaintes']:,}", "sous": "citoyennes"},
+        {"label": "Signalements", "valeur": f"{kpis['nb_signalements']:,}", "sous": "citoyens"},
+    ])
 
-    section_spacer()
     col_graph, col_table = st.columns([1.3, 1])
     with col_graph:
-        st.plotly_chart(graph_priorites(df_use), use_container_width=True)
+        afficher_figure(graph_priorites(df_use))
     with col_table:
-        st.markdown("### Top 5 points a surveiller")
+        titre_section("A agir aujourd'hui")
         st.dataframe(
             df_use.sort_values(
                 "fillRate_predit", ascending=False
@@ -469,23 +420,25 @@ def page_accueil(df, filtres):
 
 def page_supervision(df, filtres):
     kpis, df_use = calculer_kpis(df, filtres)
-    st.subheader("Supervision des points de regroupement")
+    entete_page(
+        "Supervision des points de regroupement",
+        "Localisation, niveau de remplissage et besoin de collecte des points pour la "
+        "periode selectionnee.",
+    )
 
     if df_use.empty:
         st.warning("Aucun point ne correspond aux filtres pour cette date.")
         return
 
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        carte_kpi("Points suivis", f"{kpis['nb_points']:,}")
-    with c2:
-        carte_kpi("FillRate actuel moyen", f"{kpis['fill_moyen']:.1f}", "%")
-    with c3:
-        carte_kpi("FillRate predit moyen", f"{kpis['fill_predit_moyen']:.1f}", "%")
-    with c4:
-        carte_kpi("Points prioritaires", f"{kpis['nb_prioritaires']:,}")
+    bande_kpi([
+        {"label": "Points suivis", "valeur": f"{kpis['nb_points']:,}"},
+        {"label": "FillRate actuel", "valeur": f"{kpis['fill_moyen']:.1f}", "suffixe": "%"},
+        {"label": "FillRate predit", "valeur": f"{kpis['fill_predit_moyen']:.1f}", "suffixe": "%"},
+        {"label": "Points prioritaires", "valeur": f"{kpis['nb_prioritaires']:,}",
+         "accent": "urgent", "is_accent": True},
+    ])
 
-    st.markdown("### Carte intelligente des points de regroupement")
+    titre_section("Carte intelligente des points de regroupement", compteur=f"{len(df_use)} points")
     afficher_legende()
     carte = construire_carte(df_use)
     if carte is None:
@@ -493,22 +446,25 @@ def page_supervision(df, filtres):
     else:
         st_folium(carte, width="100%", height=500)
 
-    st.markdown("### Analyse actuel vs predit")
+    titre_section("Analyse actuel vs predit")
     col1, col2 = st.columns(2)
     with col1:
-        st.plotly_chart(graph_actuel_vs_predit(df_use), use_container_width=True)
+        afficher_figure(graph_actuel_vs_predit(df_use))
     with col2:
         fig_h = graph_hausses_fortes(df_use)
         if fig_h is not None:
-            st.plotly_chart(fig_h, use_container_width=True)
+            afficher_figure(fig_h)
 
-    st.markdown("### Tableau operationnel")
+    titre_section("Tableau operationnel")
     st.dataframe(tableau_operationnel(df_use), use_container_width=True, hide_index=True)
 
 
 def page_prioritaires(df, filtres):
     _, df_use = calculer_kpis(df, filtres)
-    st.subheader("Points necessitant une intervention")
+    entete_page(
+        "Points necessitant une intervention",
+        "Points classes Elevee ou Urgente : a planifier en priorite dans la tournee.",
+    )
 
     df_prio = df_use[df_use["priorite_prediction"].isin(["Elevée", "Urgente"])].copy()
     if df_prio.empty:
@@ -519,7 +475,7 @@ def page_prioritaires(df, filtres):
     df_prio["_ord"] = df_prio["priorite_prediction"].map(ordre_map)
     df_prio = df_prio.sort_values(["_ord", "fillRate_predit"], ascending=[True, False]).drop(columns="_ord")
 
-    st.markdown(f"**{len(df_prio)} point(s)** classés Elevee ou Urgente.")
+    titre_section("Liste prioritaire", compteur=f"{len(df_prio)} points")
     top10 = df_prio.head(10)
     st.dataframe(
         top10[["id_point", "fillRate", "fillRate_predit", "risque_debordement", "priorite_prediction", "action_recommandee"]]
@@ -529,31 +485,32 @@ def page_prioritaires(df, filtres):
         hide_index=True,
     )
 
-    st.markdown("### Les 10 points les plus critiques")
+    titre_section("Localisation des points critiques")
     carte = construire_carte(top10)
     if carte is not None:
         st_folium(carte, width="100%", height=450)
 
 
 def page_analyse_predictive(contexte):
-    st.subheader("Analyse predictive - le modele de Machine Learning")
-
-    st.markdown(
-        """
-        Le modele estime le niveau de remplissage futur d'un point
-        a partir des informations disponibles au moment de la prediction.
-        """
+    entete_page(
+        "Analyse predictive",
+        "Le modele estime le taux de remplissage futur de chaque point a partir des "
+        "informations disponibles au moment de la prediction, puis une regle metier en "
+        "deduit la priorite et l'action.",
     )
 
-    c1, c2 = st.columns(2)
+    c1, c2 = st.columns([1, 1])
     with c1:
-        st.markdown("### Variable cible")
-        st.markdown("`fillRate_target_t_plus_1` : taux de remplissage du point le lendemain.")
-        st.markdown("### Modele")
-        st.markdown("**Gradient Boosting** - modele de reference actuel (regression supervisee).")
-
+        titre_section("Modele")
+        st.markdown(
+            "**Variable cible** : `fillRate_target_t_plus_1` — taux de remplissage du "
+            "point le lendemain."
+        )
+        st.markdown(
+            "**Algorithme** : Gradient Boosting, modele de reference (regression supervisee)."
+        )
     with c2:
-        st.markdown("### Performances du modele")
+        titre_section("Performances")
         if contexte.get("metrics"):
             m = contexte["metrics"]
             a, b = st.columns(2)
@@ -562,15 +519,13 @@ def page_analyse_predictive(contexte):
             a.metric("MAE", f"{m['mae']:.2f}")
             b.metric("MAPE", f"{m['mape']:.3f}")
         else:
-            st.info("Métriques non disponibles : fichier results/comparaison_modeles.xlsx introuvable.")
+            st.info("Metriques non disponibles : fichier results/comparaison_modeles.xlsx introuvable.")
             a, b = st.columns(2)
             a.metric("R²", "0.775")
             b.metric("RMSE", "8.06")
             a.metric("MAE", "6.24")
 
-    section_spacer()
-    st.markdown("### Simulation IA interactive")
-
+    titre_section("Simulation interactive")
     if contexte.get("model") is None:
         st.warning("Le modele n'est pas disponible, la simulation est desactivee.")
     else:
@@ -604,9 +559,8 @@ def page_analyse_predictive(contexte):
                 ligne_ml = extraire_ligne_ml(ml_df, point_sel, date_sel)
                 base_predit, base_priorite, base_action, _ = simuler_prediction(ligne_ml)
 
-                st.markdown("#### Parametres operationnels (scenario)")
                 ajustements = {}
-                with st.expander("Ajuster les parametres (what-if)", expanded=True):
+                with st.expander("Parametres operationnels (scenario what-if)", expanded=True):
                     for colonne, (mini, maxi, pas) in FEATURES_SIMULABLES.items():
                         if colonne in ligne_ml.index:
                             valeur_slider, mini_s, maxi_s, pas_s = cohercer_slider(
@@ -622,61 +576,30 @@ def page_analyse_predictive(contexte):
 
                 predit, priorite, action, _ = simuler_prediction(ligne_ml, ajustements)
 
-                st.markdown("#### Resultat de la prediction IA")
-                rc1, rc2, rc3, rc4 = st.columns(4)
-                with rc1:
-                    carte_kpi("FillRate actuel", f"{ligne_ml['fillRate']:.1f}", "%")
-                with rc2:
-                    carte_kpi(
-                        "FillRate predit (IA)",
-                        f"{predit:.1f}",
-                        "%",
-                        sous_texte=f"reference : {base_predit:.1f}%",
-                    )
-                couleur = COULEURS_PRIORITE.get(priorite, "#78909C")
-                with rc3:
-                    st.markdown(
-                        f'<div class="kpi-card">'
-                        f'<div class="kpi-label">Priorite predite</div>'
-                        f'<div style="margin-top:0.3rem;">{badge_priorite(priorite)}</div>'
-                        f'</div>',
-                        unsafe_allow_html=True,
-                    )
-                with rc4:
-                    st.markdown(
-                        f'<div class="kpi-card">'
-                        f'<div class="kpi-label">Action recommandee</div>'
-                        f'<div class="kpi-value" style="font-size:1rem;color:#1A2332;">{action}</div>'
-                        f'</div>',
-                        unsafe_allow_html=True,
-                    )
+                titre_section("Resultat de la prediction")
+                accent_prio = (
+                    "urgent" if priorite in ("Urgente", "Elevée")
+                    else ("vert" if priorite == "Faible" else None)
+                )
+                bande_kpi([
+                    {"label": "FillRate actuel", "valeur": f"{ligne_ml['fillRate']:.1f}", "suffixe": "%"},
+                    {"label": "FillRate predit (IA)", "valeur": f"{predit:.1f}", "suffixe": "%",
+                     "sous": f"reference : {base_predit:.1f}%"},
+                    {"label": "Priorite predite", "valeur": badge_priorite(priorite), "accent": accent_prio},
+                    {"label": "Action recommandee", "valeur": action},
+                ])
 
-                st.markdown("#### Pipeline IA : de la donnee a l'action")
-                etapes = [
-                    ("1. Modele", "Gradient Boosting"),
-                    ("2. Prediction", f"{predit:.1f}%"),
-                    ("3. Priorite", badge_priorite(priorite)),
-                    ("4. Action", action),
-                ]
-                cols_etapes = st.columns(len(etapes))
-                for col, (titre, valeur) in zip(cols_etapes, etapes):
-                    with col:
-                        st.markdown(
-                            f"""
-                            <div class="etape-pipeline">
-                                <div class="et-titre">{titre}</div>
-                                <div class="et-valeur">{valeur}</div>
-                            </div>
-                            """,
-                            unsafe_allow_html=True,
-                        )
-
-                section_spacer()
+                stepper([
+                    ("1 · Modele", "Gradient Boosting"),
+                    ("2 · Prediction", f"{predit:.1f}%"),
+                    ("3 · Priorite", badge_priorite(priorite)),
+                    ("4 · Action", action),
+                ])
 
             except ValueError as e:
                 st.warning(str(e))
 
-    st.markdown("### Distinction importante")
+    titre_section("Prediction vs decision metier")
     col1, col2 = st.columns(2)
     with col1:
         st.markdown(
@@ -699,30 +622,24 @@ def page_analyse_predictive(contexte):
         )
 
     if contexte.get("importance") is not None:
-        st.markdown("### Importance des variables (top 10)")
+        titre_section("Importance des variables (top 10)")
         imp = contexte["importance"].head(10)
         fig = px.bar(
             imp,
             x="Importance",
             y="Variable",
             orientation="h",
-            color_discrete_sequence=["#1565C0"],
+            title="Variables les plus influentes sur la prediction",
         )
-        fig.update_layout(
-            height=420,
-            margin=dict(l=10, r=10, t=45, b=10),
-            title=dict(text="Variables les plus influentes sur la prediction", font=dict(size=14, color="#1A2332")),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(family="Inter, sans-serif", color="#374151", size=12),
-            xaxis=dict(gridcolor="#F1F5F9", zerolinecolor="#E2E8F0"),
-            showlegend=False,
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        afficher_figure(fig, hauteur=420)
 
 
 def page_donnees(df):
-    st.subheader("Donnees du systeme")
+    entete_page(
+        "Donnees du systeme",
+        "Source, volume et qualite des donnees alimentant le modele et la supervision.",
+    )
+
     st.markdown(f"**{len(df):,} enregistrements** - **{df['id_point'].nunique()} points** - "
                 f"du {pd.to_datetime(df['date_collecte']).min().date()} au {pd.to_datetime(df['date_collecte']).max().date()}")
 
@@ -730,6 +647,7 @@ def page_donnees(df):
     if manquantes:
         st.warning("Colonnes absentes : " + ", ".join(manquantes))
 
+    titre_section("Exploration")
     onglet1, onglet2 = st.tabs(["Apercu", "Statistiques"])
     with onglet1:
         st.dataframe(df.head(1000), use_container_width=True, hide_index=True)
@@ -739,7 +657,10 @@ def page_donnees(df):
 
 
 def page_apropos():
-    st.subheader("A propos du systeme")
+    entete_page(
+        "A propos du systeme",
+        "Architecture, flux de traitement et evolutions prevues d'ECOSYS.",
+    )
 
     st.markdown(
         """
@@ -798,8 +719,6 @@ def page_apropos():
 
 
 def main():
-    afficher_entete()
-
     try:
         df = charger_donnees()
     except FileNotFoundError as e:
@@ -810,27 +729,17 @@ def main():
     contexte = charger_contexte()
 
     with st.sidebar:
-        st.markdown(
-            """
-            <div style="padding:0.5rem 0 1rem 0;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="width:32px; height:32px; background:linear-gradient(135deg, #1565C0, #1E88E5);
-                                border-radius:8px; display:flex; align-items:center; justify-content:center;">
-                        <span style="font-size:15px; font-weight:800; color:#FFFFFF;">E</span>
-                    </div>
-                    <div>
-                        <div style="font-size:16px; font-weight:800; color:#FFFFFF; letter-spacing:-0.3px;">ECOSYS</div>
-                        <div style="font-size:9px; font-weight:500; color:#64B5F6; letter-spacing:0.5px; text-transform:uppercase;">Pre-collecte</div>
-                    </div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
         st.markdown("## Navigation")
         page = st.radio("Choisir une page", PAGES, label_visibility="collapsed")
 
     filtres = afficher_filtres(df)
+
+    date_txt = filtres["date"].strftime("%d/%m/%Y") if hasattr(filtres["date"], "strftime") else str(filtres["date"])
+    contexte = (
+        f"**Période observée :** {date_txt}  ·  "
+        f"{df['id_point'].nunique():,} points de regroupement"
+    )
+    entete_app(contexte)
 
     if page == "Accueil":
         page_accueil(df, filtres)

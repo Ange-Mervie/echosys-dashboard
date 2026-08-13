@@ -30,7 +30,7 @@ from utils.metier_db import (
     seed_db,
     stats_metier,
 )
-from utils.ui import carte_kpi
+from utils.ui import carte_kpi, entete_page, titre_section, afficher_figure
 
 COULEURS_SECTEURS = {
     q: c for q, c in zip(
@@ -133,24 +133,24 @@ def onglet_secteurs(stats):
         ("Responsables", f"{df['responsable'].nunique()}", ""),
     ])
 
-    st.markdown("#### Carte des secteurs (points de regroupement)")
+    titre_section("Carte des secteurs (points de regroupement)")
     carte = construire_carte_secteurs()
     if carte is not None:
         st_folium(carte, width="100%", height=420)
     else:
         st.info("Carte indisponible (points non geolocalisables).")
 
-    st.markdown("#### Repartition par type")
+    titre_section("Repartition par type")
     rep = df["type_secteur"].value_counts().reset_index()
     rep.columns = ["type_secteur", "nombre"]
     fig = px.bar(rep, x="type_secteur", y="nombre",
                  title="Nombre de secteurs par type", color="type_secteur")
-    st.plotly_chart(fig, use_container_width=True)
+    afficher_figure(fig)
 
-    st.markdown("#### Liste des secteurs")
+    titre_section("Liste des secteurs")
     st.dataframe(df, use_container_width=True, hide_index=True)
 
-    st.markdown("#### Ajouter un secteur")
+    titre_section("Ajouter un secteur")
     with st.form("form_secteur"):
         nom = st.text_input("Nom du secteur")
         type_s = st.selectbox("Type", ["marche", "residentiel", "commercial", "mixte"])
@@ -181,12 +181,12 @@ def onglet_abonnements(stats):
     rep.columns = ["type_abonnement", "nombre"]
     fig = px.pie(rep, names="type_abonnement", values="nombre",
                  title="Abonnements par type")
-    st.plotly_chart(fig, use_container_width=True)
+    afficher_figure(fig)
 
-    st.markdown("#### Liste des abonnements")
+    titre_section("Liste des abonnements")
     st.dataframe(df, use_container_width=True, hide_index=True)
 
-    st.markdown("#### Ajouter un abonnement")
+    titre_section("Ajouter un abonnement")
     with st.form("form_abonnement"):
         options_s = _options_secteurs()
         col1, col2 = st.columns(2)
@@ -197,7 +197,7 @@ def onglet_abonnements(stats):
         with col2:
             frequence = st.selectbox("Frequence",
                                      ["quotidien", "hebdomadaire", "sur_appel"])
-            debut = st.date_input("Date de debut", value=datetime.date.today().replace(day=1))
+            debut = st.date_input("Date de debut", value=datetime.date(2026, 1, 1))
             statut = st.selectbox("Statut", ["actif", "suspendu", "expire"])
             montant = st.number_input("Montant mensuel (FCFA)", 0.0, 500000.0, 5000.0)
         if st.form_submit_button("Enregistrer"):
@@ -226,12 +226,12 @@ def onglet_precollecteurs(stats):
     rep = df["equipement"].value_counts().reset_index()
     rep.columns = ["equipement", "nombre"]
     fig = px.bar(rep, x="equipement", y="nombre", title="Precollecteurs par equipement")
-    st.plotly_chart(fig, use_container_width=True)
+    afficher_figure(fig)
 
-    st.markdown("#### Liste des precollecteurs")
+    titre_section("Liste des precollecteurs")
     st.dataframe(df, use_container_width=True, hide_index=True)
 
-    st.markdown("#### Ajouter un precollecteur")
+    titre_section("Ajouter un precollecteur")
     with st.form("form_precollecteur"):
         options_s = _options_secteurs()
         col1, col2 = st.columns(2)
@@ -269,12 +269,12 @@ def onglet_sacs_bacs(stats):
     rep = df["type_conteneur"].value_counts().reset_index()
     rep.columns = ["type_conteneur", "nombre"]
     fig = px.bar(rep, x="type_conteneur", y="nombre", title="Conteneurs par type")
-    st.plotly_chart(fig, use_container_width=True)
+    afficher_figure(fig)
 
-    st.markdown("#### Liste des sacs / bacs")
+    titre_section("Liste des sacs / bacs")
     st.dataframe(df, use_container_width=True, hide_index=True)
 
-    st.markdown("#### Ajouter un conteneur")
+    titre_section("Ajouter un conteneur")
     with st.form("form_conteneur"):
         options_s = _options_secteurs()
         col1, col2 = st.columns(2)
@@ -308,9 +308,9 @@ def onglet_passages(stats):
     mensuel = temp.set_index("date")["quantite_kg"].resample("ME").sum().reset_index()
     fig = px.bar(mensuel, x="date", y="quantite_kg",
                  title="Quantite collectee par mois (passages)")
-    st.plotly_chart(fig, use_container_width=True)
+    afficher_figure(fig)
 
-    st.markdown("#### Filtres")
+    titre_section("Filtres")
     f1, f2 = st.columns(2)
     with f1:
         pt = st.selectbox("Point",
@@ -327,7 +327,7 @@ def onglet_passages(stats):
     vue = joindre_priorite_ia(vue, "id_point")
     st.dataframe(vue, use_container_width=True, hide_index=True)
 
-    st.markdown("#### Ajouter un passage")
+    titre_section("Ajouter un passage")
     with st.form("form_passage"):
         options_pc = _options_precollecteurs()
         col1, col2 = st.columns(2)
@@ -364,19 +364,19 @@ def onglet_collectes(stats):
     mensuel = temp.set_index("date")["volume_litres"].resample("ME").sum().reset_index()
     fig = px.bar(mensuel, x="date", y="volume_litres",
                  title="Volume collecte par mois")
-    st.plotly_chart(fig, use_container_width=True)
+    afficher_figure(fig)
 
     rep = df["type_collecte"].value_counts().reset_index()
     rep.columns = ["type_collecte", "nombre"]
     fig2 = px.pie(rep, names="type_collecte", values="nombre",
                   title="Collectes : precollecte vs principale")
-    st.plotly_chart(fig2, use_container_width=True)
+    afficher_figure(fig2)
 
-    st.markdown("#### Liste des collectes")
+    titre_section("Liste des collectes")
     st.dataframe(df.sort_values("date_collecte", ascending=False),
                  use_container_width=True, hide_index=True)
 
-    st.markdown("#### Ajouter une collecte")
+    titre_section("Ajouter une collecte")
     with st.form("form_collecte"):
         options_pc = _options_precollecteurs()
         col1, col2 = st.columns(2)
@@ -418,13 +418,13 @@ def onglet_evenements(stats):
                       y="type_evenement", color="impact",
                       title="Evenements sur la periode")
     fig.update_yaxes(categoryorder="total ascending")
-    st.plotly_chart(fig, use_container_width=True)
+    afficher_figure(fig)
 
-    st.markdown("#### Liste des evenements")
+    titre_section("Liste des evenements")
     st.dataframe(df.sort_values("date", ascending=False),
                  use_container_width=True, hide_index=True)
 
-    st.markdown("#### Ajouter un evenement")
+    titre_section("Ajouter un evenement")
     with st.form("form_evenement"):
         options_s = _options_secteurs()
         col1, col2 = st.columns(2)
@@ -455,11 +455,11 @@ def onglet_evenements(stats):
 
 
 def page_metier():
-    st.subheader("Interface metier - fonctionnement Alpha Transit")
-    st.markdown(
-        "Vue operationnelle : abonnements, passages, precollecteurs, "
-        "secteurs, sacs/bacs, collectes et evenements. Les donnees simulees "
-        "sont liees aux points de regroupement et a la prediction IA."
+    entete_page(
+        "Interface metier",
+        "Vue operationnelle : abonnements, passages, precollecteurs, secteurs, "
+        "sacs/bacs, collectes et evenements. Les donnees simulees sont liees aux "
+        "points de regroupement et a la prediction IA.",
     )
     assurer_base()
     stats = stats_metier()
