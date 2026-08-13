@@ -1,6 +1,5 @@
 # Donnees volumineuses
 dashboard/*.xlsx
-dashboard/*.parquet
 data/processed/*.xlsx
 data/processed/*.parquet
 orbit_dataset.xlsx
