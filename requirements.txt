@@ -7,3 +7,5 @@ plotly>=5.20
 folium>=0.16
 streamlit-folium>=0.21
 openpyxl>=3.1
+seaborn>=0.13
+lightgbm>=4.5

@@ -110,16 +110,18 @@ def load_model_metrics():
     if chemin is None:
         return None
     df = pd.read_excel(chemin, sheet_name=0)
-    ligne_gb = df[df["Modele"].astype(str).str.contains("Gradient", na=False)]
-    if ligne_gb.empty:
-        ligne_gb = df.sort_values("RMSE").head(1)
-    row = ligne_gb.iloc[0]
+    ligne_modele = df[
+        df["Modele"].astype(str).str.contains("optimisé|deploye|déployé", na=False)
+    ]
+    if ligne_modele.empty:
+        ligne_modele = df.sort_values("R2", ascending=False).head(1)
+    row = ligne_modele.iloc[0]
     return {
-        "modele": str(row.get("Modele", "Gradient Boosting")),
-        "r2": float(row.get("R2", 0.775)),
-        "mae": float(row.get("MAE", 6.24)),
-        "rmse": float(row.get("RMSE", 8.06)),
-        "mape": float(row.get("MAPE", 0.675)),
+        "modele": str(row.get("Modele", "LightGBM optimisé")),
+        "r2": float(row.get("R2", 0.299)),
+        "mae": float(row.get("MAE", 11.58)),
+        "rmse": float(row.get("RMSE", 15.44)),
+        "mape": float(row.get("MAPE", 115.77)),
     }
 
 

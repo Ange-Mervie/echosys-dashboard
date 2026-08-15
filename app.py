@@ -564,9 +564,9 @@ def page_analyse_predictive(contexte):
         else:
             st.info("Métriques non disponibles : fichier results/comparaison_modeles.xlsx introuvable.")
             a, b = st.columns(2)
-            a.metric("R²", "0.775")
-            b.metric("RMSE", "8.06")
-            a.metric("MAE", "6.24")
+            a.metric("R²", "0.299")
+            b.metric("RMSE", "15.44")
+            a.metric("MAE", "11.58")
 
     section_spacer()
     st.markdown("### Simulation IA interactive")
