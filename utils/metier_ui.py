@@ -31,6 +31,7 @@ from utils.metier_db import (
     stats_metier,
 )
 from utils.prediction import (
+    COULEURS_PRIORITE,
     definir_priorite,
     estimer_risque_debordement,
     generer_recommandation,
@@ -213,6 +214,40 @@ def construire_carte_secteurs():
     return carte
 
 
+def construire_carte_secteurs_ia():
+    """Carte des secteurs avec couleur basee sur priorite IA."""
+    try:
+        dash = load_dashboard_data().drop_duplicates("id_point")
+    except Exception:
+        return None
+    if not {"id_point", "latitude", "longitude", "fillRate_predit", "priorite_prediction"}.issubset(dash.columns):
+        return None
+    pts = dash.dropna(subset=["latitude", "longitude"]).copy()
+    pts["secteur"] = pts["id_point"].map(INT2Q).fillna("Inconnu")
+    pts["priorite"] = pts["priorite_prediction"].apply(normaliser_priorite)
+    if pts.empty:
+        return None
+    carte = folium.Map(
+        location=[pts["latitude"].mean(), pts["longitude"].mean()],
+        zoom_start=12, control_scale=True,
+    )
+    for _, r in pts.iterrows():
+        priorite = r["priorite"]
+        couleur = COULEURS_PRIORITE.get(priorite, "#78909C")
+        folium.CircleMarker(
+            location=[r["latitude"], r["longitude"]],
+            radius=7,
+            color=couleur,
+            fill=True,
+            fill_color=couleur,
+            fill_opacity=0.75,
+            popup=(f"Point #{int(r['id_point'])} — {r['secteur']} — "
+                   f"IA: {priorite} ({r['fillRate_predit']:.0f}%)"),
+            tooltip=f"{priorite} — {r['secteur']}",
+        ).add_to(carte)
+    return carte
+
+
 def _lignes_kpi(valeurs):
     cols = st.columns(len(valeurs))
     for col, (label, valeur, suffixe) in zip(cols, valeurs):
@@ -252,8 +287,20 @@ def onglet_secteurs(stats):
         ("Responsables", f"{df['responsable'].nunique()}", ""),
     ])
 
+    # KPIs IA — secteur avec le plus de points
+    nom_ref = df.iloc[0]["nom"]
+    kpi_ia = kpi_ia_secteur(nom_ref)
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        carte_kpi("FillRate IA moyen", f"{kpi_ia['fill_moyen_predit']:.1f}", "%",
+                  sous_texte=f"sur {nom_ref}")
+    with c2:
+        carte_kpi("Points urgents IA", f"{kpi_ia['nb_urgents']}", "")
+    with c3:
+        carte_kpi("Taux de risque IA", f"{kpi_ia['taux_risque']:.0f}", "%")
+
     st.markdown("#### Carte des secteurs (points de regroupement)")
-    carte = construire_carte_secteurs()
+    carte = construire_carte_secteurs_ia()
     if carte is not None:
         st_folium(carte, width="100%", height=420)
     else:
@@ -385,13 +432,29 @@ def onglet_sacs_bacs(stats):
         ("Capacite moyenne", f"{df['capacite_litres'].mean():,.0f}", "L"),
     ])
 
-    rep = df["type_conteneur"].value_counts().reset_index()
-    rep.columns = ["type_conteneur", "nombre"]
-    fig = px.bar(rep, x="type_conteneur", y="nombre", title="Conteneurs par type")
-    st.plotly_chart(fig, use_container_width=True)
+    # IA — rejoindre priorite IA et risque
+    df_ia = joindre_priorite_ia(df, "id_point")
+    if "fillRate_predit" in df_ia.columns:
+        df_ia["risque_ia"] = df_ia["fillRate_predit"].apply(
+            lambda v: estimer_risque_debordement(v) if pd.notna(v) else "faible"
+        )
+        nb_critique = int((df_ia["risque_ia"] == "critique").sum()) if "risque_ia" in df_ia else 0
+        nb_eleve = int((df_ia["risque_ia"] == "eleve").sum()) if "risque_ia" in df_ia else 0
+        c1, c2 = st.columns(2)
+        with c1:
+            carte_kpi("Conteneurs critiques (IA)", f"{nb_critique}", "")
+        with c2:
+            carte_kpi("Conteneurs haut risque (IA)", f"{nb_eleve}", "")
 
-    st.markdown("#### Liste des sacs / bacs")
-    st.dataframe(df, use_container_width=True, hide_index=True)
+        st.markdown("#### Liste des sacs / bacs — avec priorite IA")
+        cols_aff = ["id_conteneur", "id_point", "type_conteneur", "capacite_litres",
+                    "etat", "fillRate_predit", "priorite_prediction", "risque_ia"]
+        cols_aff = [c for c in cols_aff if c in df_ia.columns]
+        st.dataframe(df_ia[cols_aff], use_container_width=True, hide_index=True)
+    else:
+        st.info("Priorite IA non disponible (dashboard absent).")
+        st.markdown("#### Liste des sacs / bacs")
+        st.dataframe(df, use_container_width=True, hide_index=True)
 
     st.markdown("#### Ajouter un conteneur")
     with st.form("form_conteneur"):
@@ -403,6 +466,13 @@ def onglet_sacs_bacs(stats):
         with col2:
             type_c = st.selectbox("Type", ["sac_100l", "bac_240l", "benne"])
             etat = st.selectbox("Etat", ["bon", "use", "endommage"])
+        # suggestion IA
+        msg, action_ia, urgent = suggestion_action_ia(int(point))
+        if msg:
+            if urgent:
+                st.warning(msg)
+            else:
+                st.info(msg)
         if st.form_submit_button("Enregistrer"):
             cap = {"sac_100l": 100, "bac_240l": 240,
                    "benne": 1100}.get(type_c, 100)
@@ -491,9 +561,19 @@ def onglet_collectes(stats):
                   title="Collectes : precollecte vs principale")
     st.plotly_chart(fig2, use_container_width=True)
 
-    st.markdown("#### Liste des collectes")
-    st.dataframe(df.sort_values("date_collecte", ascending=False),
-                 use_container_width=True, hide_index=True)
+    # IA — enrichir le tableau avec priorite IA
+    df_ia = joindre_priorite_ia(df, "id_point")
+    st.markdown("#### Liste des collectes — avec priorite IA")
+    if "priorite_prediction" in df_ia.columns:
+        st.dataframe(
+            df_ia.sort_values("date_collecte", ascending=False),
+            use_container_width=True, hide_index=True,
+        )
+    else:
+        st.dataframe(
+            df.sort_values("date_collecte", ascending=False),
+            use_container_width=True, hide_index=True,
+        )
 
     st.markdown("#### Ajouter une collecte")
     with st.form("form_collecte"):
@@ -510,9 +590,30 @@ def onglet_collectes(stats):
         vol = st.number_input("Volume (litres)", 0.0, 50000.0, 1000.0)
         duree = st.number_input("Duree (minutes)", 5, 300, 45)
         statut_c = st.selectbox("Statut", ["realisee", "planifiee", "annulee"])
+        # IA — suggestion + what-if
+        id_pt = int(point)
+        msg, action_ia, urgent = suggestion_action_ia(id_pt)
+        if msg:
+            if urgent:
+                st.warning(msg)
+            else:
+                st.info(msg)
+        sim = simulateur_ia(id_pt, date_j.strftime("%Y-%m-%d"))
+        if sim:
+            st.markdown("##### Simulation IA (what-if : +3 precollecteurs dispo)")
+            s1, s2, s3, s4 = st.columns(4)
+            with s1:
+                carte_kpi("FillRate avant", f"{sim['fillrate_avant']:.1f}", "%")
+            with s2:
+                carte_kpi("FillRate après", f"{sim['fillrate_apres']:.1f}", "%",
+                          sous_texte=f"delta: {sim['fillrate_apres'] - sim['fillrate_avant']:+.1f}%")
+            with s3:
+                st.markdown(badge_priorite(sim["priorite_avant"]), unsafe_allow_html=True)
+            with s4:
+                st.markdown(badge_priorite(sim["priorite_apres"]), unsafe_allow_html=True)
         if st.form_submit_button("Enregistrer"):
             d = datetime.datetime.combine(date_j, heure)
-            inserer_collecte(int(point), d.strftime("%Y-%m-%d %H:%M:%S"), type_c,
+            inserer_collecte(id_pt, d.strftime("%Y-%m-%d %H:%M:%S"), type_c,
                              float(vol), options_pc[precollecteur], statut_c,
                              int(duree))
             st.success("Collecte ajoutee.")
