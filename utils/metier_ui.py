@@ -343,6 +343,15 @@ def onglet_abonnements(stats):
         ("Montant moyen", f"{df['montant_mensuel'].mean():,.0f}", "FCFA"),
     ])
 
+    # IA — fill rate moyen prédit des secteurs clients
+    try:
+        fill_ia_vals = [kpi_ia_secteur(s)["fill_moyen_predit"] for s in SECTEUR_TYPES]
+        fill_ia_vals = [v for v in fill_ia_vals if v > 0]
+        if fill_ia_vals:
+            carte_kpi("FillRate IA moyen (clients)", f"{sum(fill_ia_vals)/len(fill_ia_vals):.1f}", "%")
+    except Exception:
+        pass
+
     rep = df["type_abonnement"].value_counts().reset_index()
     rep.columns = ["type_abonnement", "nombre"]
     fig = px.pie(rep, names="type_abonnement", values="nombre",
@@ -388,6 +397,15 @@ def onglet_precollecteurs(stats):
         ("Disponibles", f"{dispo:,}", ""),
         ("Sacs transportables (moy.)", f"{df['capacite_sacs'].mean():.0f}", ""),
     ])
+
+    # IA — fill rate moyen prédit des secteurs des précollecteurs
+    try:
+        fill_ia_vals = [kpi_ia_secteur(s)["fill_moyen_predit"] for s in SECTEUR_TYPES]
+        fill_ia_vals = [v for v in fill_ia_vals if v > 0]
+        if fill_ia_vals:
+            carte_kpi("FillRate IA moyen (zone)", f"{sum(fill_ia_vals)/len(fill_ia_vals):.1f}", "%")
+    except Exception:
+        pass
 
     rep = df["equipement"].value_counts().reset_index()
     rep.columns = ["equipement", "nombre"]
@@ -492,6 +510,17 @@ def onglet_passages(stats):
         ("Quantite totale", f"{df['quantite_kg'].sum():,.0f}", "kg"),
     ])
 
+    # IA — KPI sur les points couverts par les passages
+    df_ia_pts = joindre_priorite_ia(df[["id_point"]].drop_duplicates(), "id_point")
+    if "fillRate_predit" in df_ia_pts.columns:
+        fill_moyen = float(df_ia_pts["fillRate_predit"].mean())
+        nb_urgents = int(df_ia_pts["priorite_prediction"].apply(normaliser_priorite).isin(["Urgente", "Elevée"]).sum())
+        c1, c2 = st.columns(2)
+        with c1:
+            carte_kpi("FillRate IA moyen", f"{fill_moyen:.1f}", "%")
+        with c2:
+            carte_kpi("Points urgents IA", f"{nb_urgents}", "")
+
     temp = df.copy()
     temp["date"] = pd.to_datetime(temp["date_passage"])
     mensuel = temp.set_index("date")["quantite_kg"].resample("ME").sum().reset_index()
@@ -514,7 +543,10 @@ def onglet_passages(stats):
     vue["date_passage"] = pd.to_datetime(vue["date_passage"])
     vue = vue.sort_values("date_passage", ascending=False)
     vue = joindre_priorite_ia(vue, "id_point")
-    st.dataframe(vue, use_container_width=True, hide_index=True)
+    if "priorite_prediction" in vue.columns:
+        st.dataframe(vue, use_container_width=True, hide_index=True)
+    else:
+        st.dataframe(vue, use_container_width=True, hide_index=True)
 
     st.markdown("#### Ajouter un passage")
     with st.form("form_passage"):
@@ -529,6 +561,13 @@ def onglet_passages(stats):
             heure = st.time_input("Heure", value=datetime.time(8, 0))
         qte = st.number_input("Quantite (kg)", 0.0, 1000.0, 50.0, 1.0)
         statut_p = st.selectbox("Statut du passage", ["realise", "retarde", "annule"])
+        # IA — suggestion
+        msg, action_ia, urgent = suggestion_action_ia(int(point))
+        if msg:
+            if urgent:
+                st.warning(msg)
+            else:
+                st.info(msg)
         if st.form_submit_button("Enregistrer"):
             d = datetime.datetime.combine(date_j, heure)
             inserer_passage(int(point), options_pc[precollecteur],
@@ -630,6 +669,14 @@ def onglet_evenements(stats):
         ("Haut impact", f"{stats['evenements_haut_impact']:,}", ""),
         ("Types", f"{df['type_evenement'].nunique()}", ""),
     ])
+
+    # IA — événements sur points urgents
+    try:
+        dash = load_dashboard_data().drop_duplicates("id_point")
+        urgents = int(dash["priorite_prediction"].apply(normaliser_priorite).isin(["Urgente", "Elevée"]).sum())
+        carte_kpi("Points urgents IA", f"{urgents}", "")
+    except Exception:
+        pass
 
     temp = df.copy()
     temp["date"] = pd.to_datetime(temp["date"])
