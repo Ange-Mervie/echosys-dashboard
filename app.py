@@ -550,7 +550,7 @@ def page_analyse_predictive(contexte):
         st.markdown("### Variable cible")
         st.markdown("`fillRate_target_t_plus_1` : taux de remplissage du point le lendemain.")
         st.markdown("### Modele")
-        st.markdown("**Gradient Boosting** - modele de reference actuel (regression supervisee).")
+        st.markdown("**LightGBM** - modele de reference actuel (regression supervisee, 46 features, R² honnete ~0.30).")
 
     with c2:
         st.markdown("### Performances du modele")

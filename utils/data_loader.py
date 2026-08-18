@@ -114,6 +114,8 @@ def load_model_metrics():
         df["Modele"].astype(str).str.contains("optimisé|deploye|déployé", na=False)
     ]
     if ligne_modele.empty:
+        ligne_modele = df[df["Modele"].astype(str).str.contains("LightGBM", case=False, na=False)]
+    if ligne_modele.empty:
         ligne_modele = df.sort_values("R2", ascending=False).head(1)
     row = ligne_modele.iloc[0]
     return {
