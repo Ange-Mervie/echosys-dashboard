@@ -22,6 +22,34 @@ def test_joindre_priorite_ia_garde_dimension():
     assert len(out) == 2
 
 
+def test_joindre_priorite_ia_complete():
+    import pandas as pd
+    from utils.metier_ui import joindre_priorite_ia
+    df = pd.DataFrame({"id_point": [0, 1, 2]})
+    out = joindre_priorite_ia(df, "id_point")
+    assert "fillRate_predit" in out.columns
+    assert "priorite_prediction" in out.columns
+    assert "action_recommandnee" in out.columns
+    assert "risque_debordement" in out.columns
+    assert "fillRate" in out.columns
+
+
+def test_joindre_priorite_ia_survit_sans_dashboard(tmp_path, monkeypatch):
+    """Si le dashboard est absent, la fonction retourne le df intact."""
+    import pandas as pd
+    from utils import metier_ui
+    from utils.metier_ui import joindre_priorite_ia
+
+    def fake_load():
+        raise FileNotFoundError("dashboard")
+    monkeypatch.setattr(metier_ui, "load_dashboard_data", fake_load)
+
+    df = pd.DataFrame({"id_point": [0, 1]})
+    out = joindre_priorite_ia(df, "id_point")
+    assert list(out.columns) == ["id_point"]
+    assert len(out) == 2
+
+
 def test_options_precollecteurs_cables():
     import tempfile
     from pathlib import Path

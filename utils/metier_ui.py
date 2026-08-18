@@ -30,7 +30,14 @@ from utils.metier_db import (
     seed_db,
     stats_metier,
 )
-from utils.ui import carte_kpi
+from utils.prediction import (
+    definir_priorite,
+    estimer_risque_debordement,
+    generer_recommandation,
+    normaliser_priorite,
+    simuler_prediction,
+)
+from utils.ui import badge_priorite, carte_kpi
 
 COULEURS_SECTEURS = {
     q: c for q, c in zip(
@@ -47,10 +54,21 @@ def assurer_base():
 
 
 def joindre_priorite_ia(df, colonne_point):
+    """Joint les predictions IA (fillRate_predit, priorite, risque, action) au df métier.
+
+    Colonnes ajoutées : fillRate, fillRate_predit, priorite_prediction,
+    action_recommandnee, risque_debordement.
+    """
     try:
-        dash = load_dashboard_data()[
-            ["id_point", "fillRate_predit", "priorite_prediction"]
-        ].drop_duplicates("id_point")
+        dash = load_dashboard_data().drop_duplicates("id_point")
+        if "action_recommandee" in dash.columns and "action_recommandnee" not in dash.columns:
+            dash = dash.rename(columns={"action_recommandee": "action_recommandnee"})
+        if "action_recommandnee" not in dash.columns and "fillRate_predit" in dash.columns:
+            dash["action_recommandnee"] = dash["fillRate_predit"].apply(generer_recommandation)
+        cols = ["id_point", "fillRate", "fillRate_predit", "priorite_prediction",
+                "action_recommandnee", "risque_debordement", "latitude", "longitude"]
+        cols = [c for c in cols if c in dash.columns]
+        dash = dash[cols]
         df = df.merge(
             dash, left_on=colonne_point, right_on="id_point", how="left"
         ).drop(columns="id_point", errors="ignore")
