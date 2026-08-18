@@ -120,6 +120,65 @@ def suggestion_action_ia(id_point):
         return message, action, est_urgent
     except Exception:
         return "", "", False
+
+
+# ---------------------------------------------------------------------------
+# KPIs IA
+# ---------------------------------------------------------------------------
+
+_AUCUNE = {"fill_moyen_predit": 0, "nb_urgents": 0, "nb_eleves": 0, "taux_risque": 0.0}
+
+
+def kpi_ia_secteur(nom_secteur):
+    """Calcule les KPIs IA pour les points d’un secteur."""
+    try:
+        dash = load_dashboard_data().drop_duplicates("id_point")
+    except Exception:
+        return dict(_AUCUNE)
+    dash["quartier"] = dash["id_point"].map(INT2Q).fillna("Inconnu")
+    pts = dash[dash["quartier"] == nom_secteur]
+    if pts.empty or "fillRate_predit" not in pts.columns:
+        return dict(_AUCUNE)
+    priorites = pts["priorite_prediction"].apply(normaliser_priorite)
+    fill_moyen = float(pts["fillRate_predit"].mean())
+    nb_urgents = int((priorites == "Urgente").sum())
+    nb_eleves = int((priorites == "Elevée").sum())
+    nb_total = len(pts)
+    taux_risque = round((nb_urgents + nb_eleves) / nb_total * 100, 1) if nb_total > 0 else 0.0
+    return {
+        "fill_moyen_predit": round(fill_moyen, 1),
+        "nb_urgents": nb_urgents,
+        "nb_eleves": nb_eleves,
+        "taux_risque": taux_risque,
+    }
+
+
+def simulateur_ia(id_point, date_ref):
+    """Simule un what-if : +3 précollecteurs dispo, montre l’impact sur le fill rate."""
+    try:
+        from utils.data_loader import load_ml_data
+        from utils.prediction import extraire_ligne_ml, simuler_prediction
+        ml_df = load_ml_data()
+        ligne = extraire_ligne_ml(ml_df, id_point, date_ref)
+        ajustements = {"nb_precollecteurs_dispo": 3}
+        fill_avant, prio_avant, _, _ = simuler_prediction(ligne)
+        fill_apres, prio_apres, action_apres, _ = simuler_prediction(ligne, ajustements)
+        return {
+            "fillrate_avant": round(float(fill_avant), 1),
+            "fillrate_apres": round(float(fill_apres), 1),
+            "priorite_avant": prio_avant,
+            "priorite_apres": prio_apres,
+            "action": action_apres,
+        }
+    except Exception:
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Carte secteurs
+# ---------------------------------------------------------------------------
+
+def construire_carte_secteurs():
     try:
         dash = load_dashboard_data()
     except Exception:

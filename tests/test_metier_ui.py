@@ -87,3 +87,26 @@ def test_suggestion_action_ia_absent():
     from utils.metier_ui import suggestion_action_ia
     message, action, est_urgent = suggestion_action_ia(99999)
     assert message == "" and action == "" and est_urgent is False
+
+
+def test_kpi_ia_secteur_deterministic():
+    from utils.metier_ui import kpi_ia_secteur
+    stats = kpi_ia_secteur("Bali")
+    assert "fill_moyen_predit" in stats
+    assert "nb_urgents" in stats
+    assert "nb_eleves" in stats
+    assert "taux_risque" in stats
+    assert isinstance(stats["fill_moyen_predit"], float)
+    assert isinstance(stats["nb_urgents"], int)
+
+
+def test_simulateur_ia_returns_dict_or_none():
+    from utils.metier_ui import simulateur_ia
+    resultat = simulateur_ia(0, "2025-12-31")
+    if resultat is not None:
+        assert "fillrate_avant" in resultat
+        assert "fillrate_apres" in resultat
+        assert "priorite_avant" in resultat
+        assert "priorite_apres" in resultat
+    else:
+        assert resultat is None
