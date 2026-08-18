@@ -1,0 +1,23 @@
+{
+  "baseline": {
+    "n_features": 46,
+    "r2": 0.29856854236239894,
+    "mae": 11.579088202787357,
+    "rmse": 15.442533458794832,
+    "mape": 115.76880899841879
+  },
+  "with_3_features": {
+    "n_features": 49,
+    "r2": 0.2982783474871409,
+    "mae": 11.572384980211368,
+    "rmse": 15.445727556104371,
+    "mape": 115.78314948615133
+  },
+  "delta_r2": -0.0002901948752580541,
+  "improved": false,
+  "new_feature_importances": {
+    "fillRate_lag_7": 172,
+    "delta_24h_trend": 327,
+    "sat_risk_inter": 227
+  }
+}
