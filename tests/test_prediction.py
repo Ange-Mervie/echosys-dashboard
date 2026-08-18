@@ -14,6 +14,7 @@ from utils.prediction import (
     generer_recommandation,
     enrichir_priorite_action,
     cohercer_slider,
+    estimer_risque_debordement,
 )
 
 
@@ -144,3 +145,21 @@ class TestConstantes:
 
     def test_seuils_coherents(self):
         assert SEUILS["faible"] < SEUILS["moyenne"] < SEUILS["elevee"]
+
+
+class TestEstimerRisqueDebordement:
+    def test_critique(self):
+        assert estimer_risque_debordement(95.0) == "critique"
+        assert estimer_risque_debordement(90.0) == "critique"
+
+    def test_eleve(self):
+        assert estimer_risque_debordement(89.0) == "eleve"
+        assert estimer_risque_debordement(70.0) == "eleve"
+
+    def test_modere(self):
+        assert estimer_risque_debordement(69.0) == "modere"
+        assert estimer_risque_debordement(40.0) == "modere"
+
+    def test_faible(self):
+        assert estimer_risque_debordement(39.0) == "faible"
+        assert estimer_risque_debordement(0.0) == "faible"

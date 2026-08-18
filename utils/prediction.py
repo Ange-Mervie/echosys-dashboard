@@ -64,6 +64,17 @@ def generer_recommandation(fillrate):
     return "Surveillance simple"
 
 
+def estimer_risque_debordement(fillrate_predit):
+    """Catégorise le risque de débordement à partir du fillRate prédit par l'IA."""
+    if fillrate_predit >= 90:
+        return "critique"
+    if fillrate_predit >= 70:
+        return "eleve"
+    if fillrate_predit >= 40:
+        return "modere"
+    return "faible"
+
+
 def enrichir_priorite_action(df):
     """Ajoute priorite_prediction et action_recommandee si absents."""
     if "priorite_prediction" not in df.columns and "fillRate_predit" in df.columns:
