@@ -61,10 +61,29 @@ def test_options_precollecteurs_cables():
 
 def test_cohercer_slider_homogeneise_les_types():
     from utils.prediction import cohercer_slider
-    # valeur entiere (np.int64) + bornes int -> tout en int
     v, lo, hi, stp = cohercer_slider(2, 0, 7, 1)
     assert isinstance(v, int) and isinstance(lo, int) and isinstance(hi, int)
-    # valeur flottante -> tout en float
     v2, lo2, hi2, stp2 = cohercer_slider(2.5, 0, 7, 1)
     assert isinstance(v2, float) and isinstance(lo2, float) and isinstance(hi2, float)
     assert set(map(type, (v2, lo2, hi2, stp2))) == {float}
+
+
+def test_badge_priorite_ia_type():
+    from utils.metier_ui import badge_priorite_ia
+    html = badge_priorite_ia(0)
+    assert isinstance(html, str)
+    assert "badge" in html.lower()
+
+
+def test_suggestion_action_ia_existant():
+    from utils.metier_ui import suggestion_action_ia
+    message, action, est_urgent = suggestion_action_ia(0)
+    assert isinstance(message, str)
+    assert isinstance(action, str)
+    assert isinstance(est_urgent, bool)
+
+
+def test_suggestion_action_ia_absent():
+    from utils.metier_ui import suggestion_action_ia
+    message, action, est_urgent = suggestion_action_ia(99999)
+    assert message == "" and action == "" and est_urgent is False

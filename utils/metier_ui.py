@@ -77,7 +77,49 @@ def joindre_priorite_ia(df, colonne_point):
     return df
 
 
-def construire_carte_secteurs():
+def badge_priorite_ia(id_point):
+    """Rend un badge priorite IA HTML pour un point. Gris si absent du dashboard."""
+    try:
+        dash = load_dashboard_data().drop_duplicates("id_point")
+        ligne = dash[dash["id_point"] == id_point]
+        if ligne.empty:
+            return '<span class="badge" style="background:#F5F7FA;color:#78909C;">IA — N/A</span>'
+        priorite = str(ligne.iloc[0].get("priorite_prediction", "Faible")).strip()
+        priorite = normaliser_priorite(priorite)
+        badge_html = badge_priorite(priorite)
+        return f'{badge_html} <span style="font-size:0.7rem;color:#8A9499;">IA</span>'
+    except Exception:
+        return '<span class="badge" style="background:#F5F7FA;color:#78909C;">IA — N/A</span>'
+
+
+def suggestion_action_ia(id_point):
+    """Suggère une action pour un point basée sur la priorite IA.
+
+    Retourne (message, action_ia, est_urgent).
+    """
+    try:
+        dash = load_dashboard_data().drop_duplicates("id_point")
+        ligne = dash[dash["id_point"] == id_point]
+        if ligne.empty:
+            return "", "", False
+        row = ligne.iloc[0]
+        fillrate = float(row.get("fillRate_predit", 0))
+        priorite = normaliser_priorite(str(row.get("priorite_prediction", "Faible")))
+        action = str(row.get("action_recommandnee", generer_recommandation(fillrate)))
+        est_urgent = priorite in ("Urgente", "Elevée")
+        if est_urgent:
+            message = f"Ce point est prédit **{priorite}**" + (
+                f" (fillRate prédit {fillrate:.0f}%) → **{action}** ?"
+                if fillrate > 0 else f" → **{action}** ?"
+            )
+        else:
+            message = f"Point **{priorite.lower()}**" + (
+                f" (fillRate prédit {fillrate:.0f}%) → {action}."
+                if fillrate > 0 else f" → {action}."
+            )
+        return message, action, est_urgent
+    except Exception:
+        return "", "", False
     try:
         dash = load_dashboard_data()
     except Exception:
