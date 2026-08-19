@@ -65,12 +65,19 @@ def generer_recommandation(fillrate):
 
 
 def estimer_risque_debordement(fillrate_predit):
-    """Catégorise le risque de débordement à partir du fillRate prédit par l'IA."""
-    if fillrate_predit >= 90:
+    """Catégorise le risque de débordement à partir du fillRate prédit par l'IA.
+
+    Règle métier unique (seuils 40/70/90, identiques à ``definir_priorite``) :
+    - < 40  → "faible"
+    - 40-69 → "modere"
+    - 70-89 → "eleve"
+    - >= 90 → "critique"
+    """
+    if fillrate_predit >= SEUILS["elevee"]:
         return "critique"
-    if fillrate_predit >= 70:
+    if fillrate_predit >= SEUILS["moyenne"]:
         return "eleve"
-    if fillrate_predit >= 40:
+    if fillrate_predit >= SEUILS["faible"]:
         return "modere"
     return "faible"
 
