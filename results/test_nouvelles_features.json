@@ -1,0 +1,23 @@
+{
+  "features_base": 46,
+  "features_nouvelles": [
+    "is_weekend_demain",
+    "rolling_mean_7d",
+    "fillRate_trend_ratio"
+  ],
+  "features_totales": 49,
+  "r2_mean": 0.2706,
+  "r2_std": 0.0226,
+  "r2_folds": [
+    0.239,
+    0.269,
+    0.288,
+    0.3022,
+    0.2549
+  ],
+  "mae_mean": 11.6568,
+  "rmse_mean": 15.5627,
+  "r2_actuel": 0.295,
+  "amelioration_r2": -0.0244,
+  "amelioration_pct": -8.3
+}
